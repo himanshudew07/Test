@@ -16,3 +16,11 @@ Multithreading
  Mysql
  PostGreSQL
  
+ c++
+ -------------
+ OOPS
+ File handing
+ Graphics
+ 
+ 
+ 
