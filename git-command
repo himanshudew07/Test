@@ -1,0 +1,17 @@
+git clone url
+git add fileName
+git status
+git commit -m 'message'
+git push
+git checkout --fileName (or) git checkout .   -> all file
+git revert
+git revert <commit_id>
+git reset --hard <commit_id>
+
+git branch : display branches
+git branch <branch_name> : create new branch as <branch_name>
+git checkout <branch_name> : swich to <branch_name>
+
+git merge <branch_name>  : merge changes of brance_name to current branch
+git push --set-upstream origin <branch_name>
+git branch -D <branch_name>
