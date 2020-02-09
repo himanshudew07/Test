@@ -36,3 +36,10 @@ Sports
 Cricket
 footbal
 tenis
+
+hardware
+-------------
+
+pendrive
+bluetooth
+wifi
