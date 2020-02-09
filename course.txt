@@ -37,9 +37,17 @@ Cricket
 footbal
 tenis
 
+<<<<<<< HEAD
 hardware
 -------------
 
 pendrive
 bluetooth
 wifi
+=======
+advance
+---------------
+Management
+scientisct corece
+
+>>>>>>> advance
