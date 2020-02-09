@@ -36,3 +36,9 @@ Sports
 Cricket
 footbal
 tenis
+
+
+vehicle
+-----------
+car
+truck
