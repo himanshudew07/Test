@@ -13,6 +13,7 @@ Digital Marketing
  ---------------
  MVC
  Crystel report
+ Dependancy Injection
  
  Database
  --------------
