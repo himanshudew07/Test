@@ -1,0 +1,13 @@
+COnfiguartion file in hybernate
+/src
+hibernate.cfg.xml
+
+<hibernate-configuration>
+
+<session-factory>
+<property name="dialect">org.hibernate.dialect.Orale12CDialect</property>
+<property name="connection.
+
+
+</session-factory>
+</hibernate-configuration>
