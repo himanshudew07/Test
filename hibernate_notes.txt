@@ -1,0 +1,886 @@
+COnfiguartion file in hybernate
+/src
+hibernate.cfg.xml
+
+<hibernate-configuration>
+
+<session-factory>
+<property name="dialect">org.hibernate.dialect.Orale12CDialect</property>
+<property name="connection.
+
+
+</session-factory>
+</hibernate-configuration>
+
+
+we can put field annotation on top of the getter itself 
+
+@Column(name="USER_NAME")
+public String getUserName(){
+return UserName;
+}
+
+package : javax.persistence.*;
+@Basic : this is field annotation,which  is eligible field to be persisted, by default every field is @Basic
+@Transient : this is field level annotation , which makes field not to be persisted.[only on field]
+
+@Temporal (TemporalType.DATE) : field level annotation, used to format the data [only on field] -> DD-MMM-YY
+		  (TemporalType.TIMESTAMP) : 
+	   	  (TemporalType.TIME)-> some different date in  DD-MMM-YY format
+
+		  
+@Lob : large data character type ..equavalent to @Clob
+@Blob : large data byte stream type
+
+---------------------------------------------------------
+Select from database table and store it to java object
+---------------------------------------------------------
+
+SessionFactory sessionFactory = new Configuration().configure().buildSessionFactory();
+Session session = sessionFactory.openSession();
+session.beginTransaction();
+
+UserDetails userDetails = (UserDetails)session.get(UserDetails.class,1287);  //here 1287 is primary key of UserDetails class. return type is Object which again 
+							cast to UserDetails
+							
+session.close();
+
+SerrogateKey
+----------------------------------------------------------------
+This is artificial key to uniqally identify a row in the table, but this does not land any meaning to data in database.
+
+In model class
+
+Package : javax.persistence.*
+
+@Generatedvalue
+@Generatedvalue(strategy = GenerationType.AUTO) // 3 other type of strategy GenerationType.IDENTITY,GeneratationType.SQUENCE,GenerationType.TABLE
+String userid;
+------------------------------------------------------------
+@Embeddeble (class level, java.persistence.Embeddeble)
+@Embedded (field level to reference type, javax.persistence.Embedded)
+
+There are two type of object value object and entity object
+this two anotation used to define value object,Single table will be created for Entity object and this value object field is added to Entity object's table as 
+a column.
+
+table as a column.
+
+
+class UserDetails{
+...
+...
+@Embedded
+Address address;
+zzz
+}
+
+@Embeddeble
+class Address{
+
+}
+
+Entity contains two value Obbject
+------------------------------------
+ If there is a scnerio when entity contain two value object of same type, so these individula object's field has to be stored into entity table as a column
+ So, for each induvidual object same filed, there will be two same column with same name, this is a problem.
+ 
+ to it is neccesarry to give different column name of every such field for one object out of two. that is why we use following annotations
+ 
+ package : pavax.persistence.AttributeOverride;
+		   pavax.persistence.AttributeOverrides;
+ 
+ 
+ @AttributeOverrides({
+ 
+ @AttributeOverride(name="field_name1" column=@Column(name="new_field_name1))
+ @AttributeOverride(name="field_name2" column=@Column(name="new_filed_name2))
+ 
+ })
+ 
+ 
+ --------------------------------------------
+ Collection type value object
+ 
+ 
+ if there is a value object of collection type inside entity object, and this object is maked as (@Embedded or @Embeddeble) then hibernate create entity 
+ object's table as it is . and new table will be created saperately corresponding to this collection type value object where row will be inserted as how many element 
+ available in collection.
+ 
+ New table name will be as EntityClassName_ValueObjectName & Foreign key column name will be like EntityClassName_PrimaryKey
+ 
+ Here one more point  is , to make relationship between  Entity and value object, hibernate add one extra column in value object's table as a foreign key
+ refer to  primary key of an entity object.
+ 
+ 
+ 
+ Here collection type object must me annotated with @ElementCollection,otherwise this will be ignored
+ 
+ Class UserDetails{
+ .. ..
+ .. ..
+ @ElementCollection
+ Set<Address> addressSet = new HashSet<Address>(); // Note : here declaration type of addressSet should be of only 'Set' type.
+ .......
+ ..........
+ }
+ 
+ New Table Name: UserDetails_addressSet
+ 
+ 
+ ---------------------------------------------------------------------------------------------------------
+ 
+ @JoinTable & @JoinColumn
+ 
+
+
+ javax.persistence.JoinTable
+ javax.persistence.JoinColumn
+ 
+ @JoinTable : used to define table name corresponding to  collection type member varibale of entity class.
+ @JoinColumn : Used to define foreignKey column name of collection type member varibale's table.
+ 
+ @JoinTable(name="UserAddress" joinColumn= @JoinColumn(name="UserID"));
+ Set<Address> addressSet = new HashSet<Address>();
+ 
+ 
+ ----------------------------------------------------------------------------------------------------------
+ 
+ @SequenceGenerator(name = "SEQ", sequenceName = "VEHICLE_SEQ") : This will create a sequence by name VEHICLE_SEQ 
+                    create sequence VEHICLE_SEQ start with 1 increment by  50
+ @GeneratedValue(strategy = GenerationType.AUTO)
+					create sequence hibernate_sequence start with 1 increment by  1
+					
+					
+
+ In derived table if we want to create create new column as primary key so we can do it by
+ 
+ 
+ 
+ @SequenceGenerator(name="myGen" sequenceName="VEHICLE_SEQ") // org.hibernate.annotations.SequenceGenerator;
+ @CollectionId(columns={@Column(name="MyUniqueId")},generator="myGen", type=@Type(type="long")) // here this line create primary key by name "MyUniqueId" 
+ // and of type long in derived table corresponding to collection type member varibale addressList. here value will be provided by hybernate as sequenceGenerator.
+ 
+ 
+ Collection<Address> addressList = new ArrayList<Address> ();
+ 
+ Note : Here set does not support @CollectionId
+ 
+ 
+ 
+ Laze loading (default nature) & Proxy classes
+ -----------------------------------------------
+ if entity class contain collection type member varibale, so at the time of fetching entity table data from  database, hibernate use lazy loading , means
+ it will retrive data corresponding to all field's  except collection type member variable. at the momont we call the getter method or trying to access this 
+ collection type data then only hibernate fetch that data from database.
+ 
+ to Support above scenerio hibernate use proxy design pattern,
+ 
+ 
+ 
+ 
+ One to One relationship
+ ----------------------
+ 
+ If there is two entity class , where one entity use other. So at that time two saperate column will be created each for induvidual entity.
+ 
+ So to maintain one to one relationship between these two tables we use @OnetoOne annotation , here hibernate create one extra column on own class table 
+ as a foreign key which refere primany key of owe class table.
+javax.persistence.OneToOne;
+
+@Entity
+Class UserDetails{
+
+@OneToOne
+@JoinColumn(name="VECHICLE_ID")
+Vehicle vehicle;
+
+} 
+
+@Entity
+class Vehicle{
+
+}
+
+one to many relationship
+----------------------------------
+
+If there is two types entities where one entity of one type can use many entities of second type, so this is called one to many relatioship
+
+here two tables is created correspondance to two entity, one table for each, hibernate create one more table to maintain the relationship between
+ these two entity with two column, that table name is Tablenameofentity1_Tablenameofentity2 and each column corresponding to each entity table primary key.
+ 
+Name of two colum will be like Tablenameofentity1_primarykeyname and Tablenameofentity2_primarykeyname
+
+
+@Entity
+class UserDetails{
+
+@JoinTable(name="RELATIONSHIP", joinColumn="@JoinColumn(name="USERID"),inverseJoinColumn=@JoinColumn(name="VEHICLEID")); 
+																		// third table name to maintain relationship  will be RELATIONSHIP.
+                                                                        // first column name will be USERID as UserDetails table's primary key.
+																		// second column name will be VEHICLEID as VEHICLE table's primary key.
+@OneToMany
+List<Vehicle> vehicles = new ArrayList<>();  // in table 'RELATIONSHIP'  VECHICLE_ID will be unique key.  (many side will be unique key)
+
+
+}
+
+ 
+@Ent
+class Vehicle{
+
+
+}
+
+RELATIONSHIP Table's schema
+----------------------
+USERID      VECHICLE_ID
+
+878			59121
+878			01828
+
+USERID & VECHICLE_ID are forien key.
+
+Sequence the hibernate execute jdbc 
+----------------------------------
+Hibernate: drop table RELATION_USER_VEHICLE cascade constraints
+
+Hibernate: drop table UserDetails cascade constraints
+Hibernate: drop table Vehicle cascade constraints
+Hibernate: drop sequence hibernate_sequence
+
+Hibernate: create sequence hibernate_sequence start with 1 increment by  1
+
+
+
+Hibernate: create table RELATION_USER_VEHICLE (USERID number(10,0) not null, VEHICLEID number(10,0) not null)
+Hibernate: create table UserDetails (UserID number(10,0) not null, Height float not null, JoiningDate date, CITY_NAME varchar2(255 char), ZIP_CODE number(10,0), STATE_NAME varchar2(255 char), STREET_NAME varchar2(255 char), primary key (UserID))
+Hibernate: create table Vehicle (VEHICLE_ID number(10,0) not null, VEHICLE_NAME varchar2(255 char), primary key (VEHICLE_ID))
+Hibernate: alter table RELATION_USER_VEHICLE add constraint UK_ebdawk11du17sc9i9vb4ndoxh unique (VEHICLEID)
+Hibernate: alter table RELATION_USER_VEHICLE add constraint FK5xh9gsix77chp2ag2j6dja7b4 foreign key (VEHICLEID) references Vehicle
+Hibernate: alter table RELATION_USER_VEHICLE add constraint FK9b10clwo4q5dh81hnis48hsox foreign key (USERID) references UserDetails
+
+
+Hibernate: select hibernate_sequence.nextval from dual
+userDetails Table created
+Vehicle Table created
+Hibernate: insert into UserDetails (Height, JoiningDate, CITY_NAME, ZIP_CODE, STATE_NAME, STREET_NAME, UserID) values (?, ?, ?, ?, ?, ?, ?)
+Hibernate: insert into Vehicle (VEHICLE_NAME, VEHICLE_ID) values (?, ?)
+Hibernate: insert into Vehicle (VEHICLE_NAME, VEHICLE_ID) values (?, ?)
+Hibernate: insert into Vehicle (VEHICLE_NAME, VEHICLE_ID) values (?, ?)
+Hibernate: insert into RELATION_USER_VEHICLE (USERID, VEHICLEID) values (?, ?)
+Hibernate: insert into RELATION_USER_VEHICLE (USERID, VEHICLEID) values (?, ?)
+Hibernate: insert into RELATION_USER_VEHICLE (USERID, VEHICLEID) values (?, ?)
+
+Many to one relationship
+--------------------------
+For above example
+
+class UserDetail{
+
+
+}
+
+class Vehicle{
+
+@ManyToOne
+@TableJoin(name= "RELATION_USERDETAIL_VEHICLE") // For @ManyToOne relationship this line is must..otherwise RELATION_USERDETAIL_VEHICLE table will not be created 
+UserDetails userDetails;																	 // Unique key in RELATION_USERDETAIL_VEHICLE table will be Vehicle_VehicleID.
+
+}
+
+UserDetails userDetails1 = new UserDetails()
+Vehicle vehicleA = new Vehicle();
+Vehicle vehicleB = new Vehicle();
+Vehicle vehicleC = new Vehicle();
+
+vehicleA.setUserDetails(userDetails1);
+vehicleB.setUserDetails(userDetails1);
+vehicleC.setUserDetails(userDetails1);
+
+
+Database Table RELATION_USERDETAIL_VEHICLE
+------------------------------------------
+
+UserDetail_UserID   Vehicle_VehicleID
+----------------------------------------
+        1				A
+		1				B
+		1				C
+		
+Note : I observed in oneToMany or ManyToOne , one type is on left hand side in RELATION_USERDETAIL_VEHICLE table. 
+
+
+
+Many to Many
+-----------------------------------------
+
+Class vehicle{
+
+
+@ManyToMany --> Table Name = "Vehicle_Doctor"
+@ManyToMany(mappedBy="vehicles");    // This will use table  'Doctor_vehicle'   no saperate table will be created.    
+List<Doctor>   doctors = new ArrayList<Doctor>(); --
+
+}
+
+class Doctor{
+
+@ManyToMany --> Table Name = "Doctor_vehicle"
+List<Vehicle> vehicles = new ArryList<Vehicle>();  
+
+}
+
+
+
+@NotFound (action = NotFoundAction.IGNORE);
+--------------------------------------------------------------------------
+
+
+
+class Emp{
+
+
+
+}
+class Vehicle{
+
+@ManyToOne
+@NotFound(action=NotFoundAction.IGNORE) // if any emp is not accociated with Vehicle on DB at any moment  and if we try to get Emp from Vehicle object (ie vehicle.getEmp()), So instead of throwing exception , Hibernate ignore it.
+Emp e ;
+}
+
+
+Hibernate Collection
+-------------------------------
+
+Bag Semantic (List or ArrayList)
+Bag Semantic with ID (List or ArrayList)
+List Semantic (List or arrayList)
+Set Semantic (Set)
+Map semantic (Map)
+
+
+CascadeType (javax.persistence.CascadeType)
+------------------------------------
+
+
+
+
+If one object is using other object , and we have defined how they are associated  to each other, so there should not be necessary to save induvidual both the object in database. If one object is saved automatically hibernate should save
+other object as per their association.
+
+In order to do it we use bellow anotation.
+
+class Vehicle{
+
+@ManyToOne(cascade = CascadeType.PERSIST)
+Emp emp;
+
+}
+
+
+session.persist(vehicleObject); //This will craete table and insert row for Emp automatically.
+
+
+Inheritence
+-------------------------
+ 
+ some point to remeber
+ 
+ * If hibernate looks any class as @Entity and it is mapped in cfg.xml file then hibernate create table for it whather we call session.save for object or not.
+ * If parent class and child class is mareked by @Entity then once table is created according to parent class this is default behavior of hibernate over inheritencee.
+
+  * If Child class contain other it's own primary key (@Id) then hibernate throw exception
+java.lang.ClassCastException: org.hibernate.mapping.SingleTableSubclass cannot be cast to org.hibernate.mapping.RootClass
+  *
+
+  ***********DEFAULT STRETEGY**************
+
+@Inheritence( stretegy = InheritenceType.SINGLE_TABLE)  // default stretegy : no need to write this line
+
+@DiscriminatorColumn(
+name="CLASS_NAME"  //  discriminator column name  = CLASS_NAME
+discriminatorType=DiscriminatorType.STRING
+)
+@ DiscriminatorValue(value = "myVehicle") // This annotation  is used to defined dtype value for this class entity.
+class Vehicle{
+
+String vno;
+String name;
+
+}
+
+class TwoWheeler extends Vehicle{
+
+String PetrolEngine;
+}
+class FourWheelar extends Vehicle{
+
+String DeiselEngine;
+
+}
+
+
+Vehicle table in DB
+----------------------------
+dType              vno     name     PetrolEngine   DieselEngine
+---------------------------------------------------------------
+ Vehicle           2345     TATA                    
+ TwoWheeler        1282     BAJAJ     YES
+ FourWheelar       9209 MARUTI                    YES
+ 
+ 
+ 
+ ************** TABLE PER CLASS STRETEGY*********************************
+ 
+ @Inheritence(stretegy = InheritenceType.TABLE_PER_CLASS)
+ class Vehicle
+ {
+ 
+ }
+ 
+ In this type of strategy
+ 
+ 1. saperate table will be created for each inherited class.
+ 2. for all the attribute available in parent class saperate column will be created by Hibernate.
+ 3. Attribute maked with any annotation will be also inherited in child class;
+ 
+ 
+  CRUD Operaion
+ -----------------
+ 
+ class UserDetails{
+ @Id  @generatedValue(stretegy= GeneratationType.AUTO)
+ private int userID;
+ private String name;
+ private int salary;
+ }
+ 
+ main class
+ 
+ SessionFactory sessionFactory = new Configuration().configuration().buildSession();
+ Session session = sessionFactory.openSession();
+ session.openTransaction();
+ 
+ UserDetails userDetails = new UserDetails();
+ :::::
+ // Transient state - state where object is not handover to hibernate
+ ::
+ ::
+ session.save(userDetails)
+ ::::
+ //Persistence state : After object is handover to hibernate, if we make any changes to that object will be reflected to database, so hibernate automatically
+ // fire update command for last setter method for this object at the time when we commit the transaction.
+ 
+ userDetails.setUserName("New Name1")
+ userDetails.setUserName("New Name2")
+ userDetails.setUserName("New Name3") // this will be updated to database table
+ 
+ session.getTransaction().commit(); // At this point 'New Name3' will be updated to database table for userDetails object.
+ 
+ session.close();
+ 
+ // Detached State : After closing the session, hibernate release all these object from its responsibility , so object will be on detached state.
+ 
+ 
+ 
+ 
+ Other operation
+ 
+ UPDATE : session.update(userDetails);
+ DELETE : session.delete(userDetails);
+ 
+ 
+ Keypoints
+ 
+ session = sessionFactory.buildSession();
+ session.begingTransaction();
+ 
+ 
+ Scenario
+ -----------------------
+ 
+ UserDetails userDetails = (UserDetails) session(UserDetails.class,5);
+ 
+ 
+ session.update(c); // At this point we had not changed any thing in object  'userDetails' so at the time of commiting hibernate does not fire update quiry.
+ 
+ session.getTransaction().commit();
+ session.closed();
+ 
+ // Here session is closed  so  hibernate detached 'userDetails'  object and lost all tracked  changes 
+// below new session is created.
+// hibernate does not track any record on changes carried out outside of session.
+ 
+ session = session-factory.buildSession();
+ session.beginTransaction();
+ 
+ session.update(userDetails); // but, at this point while commiting , hibernate fire update quiry because object userDetails has born in previous session and hibernate does not know between these two session whather changes has been made
+														on object or not
+ 
+ session.getTransaction().commit();
+ session.close();
+ 
+ 
+ So if we want let hibernate to check  whather there is any updates on object or not  before going to fire update quiry we use 
+ 
+ @org.hibernate.annotations.Entity(selectBeforeUpdate = true)
+ class UserDetails{
+ 
+ 
+ }
+ 
+ selectBeforeUpdate : this annotation asked hibernate to check before going to persist this class object to database whather there is any changes or not,
+ If there is any changes then only hibernate persist this to database. For this hibernate use 'select' query to database and compare with object.
+ 
+ HQL (Hibernate query Language)
+ ------------------------------
+ If we want to perform more complex operation in database, so we need more control over it. This can be done by HQL.
+ 
+ 1. This is more about object oriented specific language.
+ 2. it return list instead of Resultset.
+ 3. It takes member variable name instead of column name.
+ 
+ org.hibernate.Query;
+ 
+ Session session = sessionFactory.beginTransaction();
+ session.openTransaction();
+ 
+Query quiry  = session.createQuery("from UserDetails"); // select all record from UserDetails Table. but actual query is executed by calling query.list()
+List<UserDetails> users = query.list(); // this return List<Query>
+
+for(UserDetails user : users){
+ System.out.print(user);
+}
+
+session.getTransaction().commit();
+session.close();
+
+-------------------------------------------
+
+session.createQuery("from UserDetails where UserID > 5");
+session.createQuery("select UserName from UserDetails where UserID > 5");
+
+query.setFirstResult(4);  // now 1st record will be considered from 5
+query.setMaxResult(7);   //  On once select miximum 7 records will be fetched.
+
+Hibernate: select userdetail0_.UserID as col_0_0_ from UserDetails userdetail0_ offset ? rows fetch next ? rows only
+
+ PlaceHolder and Named Parameter
+ ---------------------------------------------------
+ 
+ Query query = session.createQuery(from UserDetails where Height > ? and UserID > ? ) // example of PlaceHolder
+ query.setFloat(0,13);
+ query.setInt(1,23);
+ 
+ 
+ 
+ Query query = session.createQuery(from UserDetails where Height > :height and UserID > :userid ) // example of Named parameter query
+ query.setFloat("height",13);
+ query.setInt("userid",23);
+ 
+ 
+ 
+ NamedQuery and NamedNativeQuery
+ --------------------------------------------------------
+ 
+ javax.persistence.NamedQuery;
+ javax.persistence.NamedNativeQuery;
+ 
+ 
+ @Entity
+ @NamedQuery(name = "doctorByID" query ="from Doctor where ID = ? ")  // This is HQL 
+ @NamedNativeQuery(name = "doctorByName" query ="select * from Doctor where Name = ?", resultClass="Doctor.class") // this is SQL
+class Doctor{
+
+}
+
+
+Main Class----
+
+ 
+ 
+ //use named query
+Query query =  session.getNamedQuery("doctorByID");
+query.setInt(0, 8);
+
+
+//use namednativequery 
+
+Query query = session.getNamedNativeQuery("doctorByName");
+query.setString(0,"docter-2");
+
+
+---------Criteria-----------------
+
+org.hibernate.Criteria;
+org.hibernate.criterion.Restrictions;
+
+There are two way to tack to database
+
+1. By creating Entity and session.get : cons : Limited control
+2. HQL and SQL : if logic is to complex then sql will gets bigger and bigger , so many line  so unable to read and much more sql specific.
+
+so this is third way by which we can talk to database.
+
+
+session.openSession();
+
+Criteria criteria = session.createCriteria(Doctor.class) // this is like a sql from .. this is where we have to apply criteria
+
+criteria.add(Restrictions.gt("age", 17));
+criteria.add(Restrictions.lt("age",25));
+
+//This will provide result as those doctor record whose age is greater than 17 and less than 25.  so two add are treated as 'AND' operator
+
+List<Doctor> docters = (List<Doctor>) criteria.list();
+
+
+session.close();
+
+.................
+another example 
+1.
+criteria.add(Restrictions.gt("age", 17));
+criteria.add(Restrictions.or(Restrictions.lt("age",25), Restrictions.eq("name","doctor-13"))); // OR opeartor
+
+2. 
+criteria.add(Restrictions.between("age",14,19));
+
+3.  criteria.addOrder(Order.desc("age"))';                 // org.hibernate.criterion.Order
+
+4.  Doctor doctor = new Doctor();
+     doctor.setName("AnyName");
+	 doctor.setAge(23);
+	 
+	 Example example = Example.create(doctor);  // org.hibernate.criterion.Example;
+	 
+	 criteria.add(doctor)  // means where doctor.name='AnyName' and doctor.age = 23; .. check what is the property set on doctor 
+	 
+	 
+	 doctor.setName("Himansu Dew%"); // if we want to use wild card and make that work we have to enable 'like'  in example   
+	 
+	 Example example = Example.create(doctor).enableLike();
+	 
+	 Note : hibernate does not apply where clause on primary key column through example object, it simply ignore it.
+	 
+	 Hibernate ignore any columm to participate on where clause through example by
+	 
+	 Example example = Example.create(doctor).excludeProperty(	"age");
+	 
+	 
+	 _-----------Projection-------------
+	 
+	 org.hibernate.criterion.Projection;
+	 org.hibernate.criterian.ProjectionList;
+	 
+	 
+If we want to select any column we can do it by Projection
+
+		Criteria criteria = session.createCriteria(Doctor.class).setProjection(Projections.property("age");    // select age from Doctor;
+	
+If we want to select various columns then we can do it by ProjectionList
+		
+		ProjectionList pList = Projections.projectionList();
+		pList.add(Projections.property("age"), "age").add(Projections.property("name"),"name");
+		
+		
+		
+		criteria.setProjection(pList).setResultTransformer(Transformer.aliasToBean(Doctor.class));
+		
+
+Aggregate function
+---------------------------
+
+criteria.setProjection(Projections.max("age"));
+criteria.setProjection(Projections.count("age"));
+
+
+Cache
+----------------------------------------
+If any object is in persistatance state and if we close that session and open new session and try to get the same object then hibenate fetch object from database which is costly operation. so if any object which is available in other session also,
+we can get that in current session by using caching concept.
+
+Bydefault hibernate use first level cache which scope is up to that session only so if session is closed hibernate does not keep track of persistence object. if we  want to keep track of those object across session then we use Second level cache.
+This object will be maintained by second level cache and scope is across the session.
+
+
+hibernate.cfg.xml
+---------------------------
+
+<property name="cache.use_second_level_cache">true</property>
+<property name="cache.provider_class">org.hibernate.cache.EhCacheProvider</property>
+
+
+
+MainClass
+---------------------
+
+
+Session session1 = sessionFactory.openSession();
+session1.beginTransaction();
+
+UserDetails usersDetails = sesstion1.get(UserDetails.class,4);
+
+session1.close();
+
+
+
+
+Session session2 = sessionFactory.openSession();
+session2.beginTransaction();
+
+UserDetails usersDetails = sesstion2.get(UserDetails.class,4); // This will be fetched from second level cache instead of databse.
+
+session2.close();
+
+
+++++++++++++++++++++++++++++++++++++++
+
+java.persistatance.Cache;
+javax.persistatance.Cacheble;
+
+@Entity
+@Cacheble
+@Cache(strategy = CacheConcurrencyStrategy.READ_ONLY)
+class UserDetails{
+
+
+
+}
+
+
+
+QueryCache
+--------------------------
+
+We we fetch the object from database by HQL or SQL technique, so to make available this types of persistence object across session we need to maintain this into query cache
+
+hibernate.cfg.xml
+===================
+<property name="cache.query_cache"> true</property>
+<property name="cache.provider_class>org.hibenate.cache.EhCacheProvider</property>
+
+
+
+MainClass
+============
+
+Session session1 = sessionFactory.openSession();
+session1.beginTransaction();
+
+Query query1 = session1.createQuery("from UserDetails where id = 5");
+query1.setCacheble(true);
+
+List users1 = (List) query1.list();
+
+session1.close();
+
+
+
+
+Session session2 = sessionFactory.openSession();
+session2.beginTransaction();
+
+Query query2 = session2.createQuery("from UserDetails where id = 5");
+query2.setCacheble(true);
+
+List users2 = (List) query2.list();
+
+session2.close();
+
+
+
+
+
+
+
+@Entity
+@Cacheble
+@Cache(strategy = CacheConcurrencyStrategy.READ_ONLY)
+class UserDetails{
+
+
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	 
+	 
+	 
+
+
+
+
+
+
+
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+
+
+
+
+
+
+
+
+
+
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+
+
+
+
+
+
+
+
+
+
+
+		  
+		  
+
+
