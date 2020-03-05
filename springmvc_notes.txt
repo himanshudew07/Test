@@ -1,0 +1,13 @@
+MVC Architecture in Spring
+====================================================sss
+
+1. Client make a Http request to server.
+2. Front-ent controller is first component which interact with this request. In spring MVC this is 'DispacherServlet' class.
+3. Now froent-end controller consult to Handler-Mapper to get the correct Controller for this request.
+4. Once froent-end controller known the Controller it delegate the client request to it.
+5. Controller perform logic on this request and produce data, and wrap this data in object which is called model and passes this to froent-end controller
+    along with view name.
+6. Front-ent controller consult to View Resolver with this view name to get exact view location.
+7. Once View location is known to Froent-end controller it passed model to that view. View prepare output by wrapping HTML.. to this model and pass return 
+this to frornd controller.
+8. Finally froent-end controller return HTTP Response to client brower, browser easily render to the client.
