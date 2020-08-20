@@ -10,3 +10,5 @@ print (a+b)
 
 a = True
 print (type(a)) #Dynamic type
+
+# will be continued tomorrow
