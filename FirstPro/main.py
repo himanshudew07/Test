@@ -13,5 +13,10 @@ print (type(a)) #Dynamic type
 
 # will be continued tomorrow
 
+<<<<<<< HEAD
 a = 23;
 print(a-b);
+=======
+b=4
+print (a*b)
+>>>>>>> 3c6b139cc810a68fd9803bfca3163d4f54f7be5c
