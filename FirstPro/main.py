@@ -12,3 +12,6 @@ a = True
 print (type(a)) #Dynamic type
 
 # will be continued tomorrow
+
+b=4
+print (a*b)
