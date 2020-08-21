@@ -12,3 +12,6 @@ a = True
 print (type(a)) #Dynamic type
 
 # will be continued tomorrow
+
+a = 23;
+print(a-b);
